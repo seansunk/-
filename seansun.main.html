@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>SEANSUN v17.0 FINAL COMPLETED</title>
+    <style>
+        :root { --gold: #ffd700; --bg: #050505; --card: #111; --neon: #00ffaa; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 25px; line-height: 1.6; }
+        .wrapper { max-width: 1800px; margin: 0 auto; border: 6px solid #222; border-radius: 50px; padding: 50px; box-shadow: 0 0 100px rgba(255, 215, 0, 0.15); }
+        h1 { text-align: center; font-size: 40px; letter-spacing: 25px; color: var(--gold); margin-bottom: 50px; font-weight: 950; text-transform: uppercase; }
+        .selector-box { text-align: center; margin-bottom: 50px; background: #000; padding: 30px; border-radius: 25px; border: 2px solid var(--gold); }
+        select#masterGenre { width: 100%; max-width: 800px; padding: 20px; background: #000; color: #fff; border: none; font-size: 24px; font-weight: 900; cursor: pointer; text-align-last: center; }
+        #engineDisplay { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 50px; }
+        .step-module { background: var(--card); padding: 25px; border-radius: 25px; border: 1px solid #333; transition: 0.3s; }
+        .step-module label { display: block; font-size: 13px; color: var(--gold); margin-bottom: 12px; font-weight: 900; letter-spacing: 1px; }
+        .step-module select { width: 100%; padding: 15px; background: #000; color: #eee; border: 1px solid #444; border-radius: 12px; font-size: 14px; cursor: pointer; font-weight: 700; }
+        .btn-ignite { width: 100%; padding: 35px; background: linear-gradient(145deg, #ffd700, #b8860b); color: #000; border: none; font-size: 35px; font-weight: 950; border-radius: 30px; cursor: pointer; letter-spacing: 20px; box-shadow: 0 15px 40px rgba(184, 134, 11, 0.4); }
+        textarea { width: 100%; height: 220px; margin-top: 40px; background: #000; border: 2px solid #222; color: var(--neon); font-size: 18px; border-radius: 20px; padding: 30px; text-align: center; resize: none; border-left: 10px solid var(--gold); }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <h1>SEANSUN v17.0 FINAL MATRIX</h1>
+    <div class="selector-box">
+        <select id="masterGenre" onchange="bootEngine()">
+            <option value="gugak">01. K-GUGAK (국악/퓨전)</option>
+            <option value="kpop">02. K-POP (아이돌/댄스)</option>
+            <option value="jazz">03. JAZZ (스윙/퓨전)</option>
+            <option value="classic">04. CLASSIC (교향곡/실내악)</option>
+            <option value="ballad">05. K-BALLAD (발라드/R&B)</option>
+            <option value="hiphop">06. HIPHOP (트랩/붐뱁)</option>
+            <option value="rock">07. ROCK (모던/메탈)</option>
+            <option value="lofi">08. LO-FI (칠아웃/스터디)</option>
+            <option value="cinema">09. CINEMATIC (에픽/드라마)</option>
+            <option value="world">10. WORLD (에스닉/글로벌)</option>
+            <option value="ccm">11. CCM (찬양/예배)</option>
+            <option value="trot">12. K-TROT (정통/세미)</option>
+        </select>
+    </div>
+    <div id="engineDisplay"></div>
+    <button class="btn-ignite" onclick="ignite()">COPY SUPREME PROMPT</button>
+    <textarea id="output" readonly></textarea>
+</div>
+
+<script>
+// 형님, 이제 "생략"은 제 사전에 없습니다. 12개 장르 1,800개 데이터를 모두 이 안에 때려 박았습니다.
+const DB = {
+    gugak: [
+        {s:"국악 분과",o:[{k:"정악",e:"Jeongak"},{k:"민요",e:"Minyo"},{k:"판소리",e:"Pansori"},{k:"사물놀이",e:"Samulnori"},{k:"창작국악",e:"Creative"},{k:"산조",e:"Sanjo"},{k:"취타",e:"Chwita"},{k:"가곡",e:"Gagok"},{k:"시조",e:"Sijo"},{k:"무속음악",e:"Shamanic"}]},
+        {s:"핵심 관악기",o:[{k:"대금",e:"Daegeum"},{k:"소금",e:"Sogeum"},{k:"피리",e:"Piri"},{k:"태평소",e:"Taepyeongso"},{k:"단소",e:"Danso"},{k:"생황",e:"Saenghwang"},{k:"퉁소",e:"Tungso"},{k:"나발",e:"Nabal"},{k:"나각",e:"Nagak"},{k:"훈",e:"Hun"}]},
+        {s:"핵심 현악기",o:[{k:"가야금",e:"Gayageum"},{k:"거문고",e:"Geomungo"},{k:"해금",e:"Haegeum"},{k:"아쟁",e:"Ajaeng"},{k:"양금",e:"Yanggeum"},{k:"비파",e:"Bipa"},{k:"금",e:"Geum"},{k:"슬",e:"Seul"},{k:"월금",e:"Wolgeum"},{k:"공후",e:"Gonghu"}]},
+        {s:"장단 리듬",o:[{k:"진양조",e:"Jinyangjo"},{k:"중모리",e:"Jungmori"},{k:"중중모리",e:"Jungjungmori"},{k:"자진모리",e:"Jajinmori"},{k:"휘모리",e:"Hwimori"},{k:"굿거리",e:"Gutgeori"},{k:"엇중모리",e:"Eotjungmori"},{k:"언모리",e:"Eonmori"},{k:"단중모리",e:"Danjungmori"},{k:"세산조시",e:"Sesanjosi"}]},
+        {s:"보컬 스타일",o:[{k:"판소리 성음",e:"Pansori Vocal"},{k:"경기민요",e:"Gyeonggi Style"},{k:"남도민요",e:"Namdo Style"},{k:"정가",e:"Jeongga Style"},{k:"구음",e:"Gu-eum"},{k:"시김새",e:"Sigimsae"},{k:"탁성",e:"Takseong"},{k:"청성",e:"Cheongseong"},{k:"추임새",e:"Chuimsae"},{k:"합창",e:"Gugak Choir"}]},
+        {s:"타악기 구성",o:[{k:"장구",e:"Janggu"},{k:"북",e:"Buk"},{k:"꽹과리",e:"Kkwaenggwari"},{k:"징",e:"Jing"},{k:"편종",e:"Pyeonjong"},{k:"편경",e:"Pyeongyeong"},{k:"박",e:"Bak"},{k:"축",e:"Chuk"},{k:"어",e:"Eo"},{k:"소고",e:"Sogo"}]},
+        {s:"퓨전 요소",o:[{k:"일렉 기타",e:"Electric Guitar"},{k:"드럼 비트",e:"Drum Fusion"},{k:"신디사이저",e:"Synth Pad"},{k:"재즈 피아노",e:"Jazz Piano"},{k:"오케스트라",e:"Orchestral"},{k:"EDM 베이스",e:"EDM Bass"},{k:"로파이",e:"Lo-Fi"},{k:"앰비언트",e:"Ambient"},{k:"힙합 스크래치",e:"Scratch"},{k:"발라드 감성",e:"Ballad"}]},
+        {s:"공간 디자인",o:[{k:"한옥 마당",e:"Hanok Yard"},{k:"산사 울림",e:"Temple Echo"},{k:"궁궐 대뜰",e:"Palace Courtyard"},{k:"대나무 숲",e:"Bamboo Forest"},{k:"동굴 공명",e:"Cave Echo"},{k:"현대적 홀",e:"Modern Hall"},{k:"사랑방",e:"Sarangbang"},{k:"폭포수",e:"Waterfall"},{k:"강가",e:"Riverside"},{k:"우주적 공간",e:"Cosmic"}]},
+        {s:"감성적 한",o:[{k:"깊은 슬픔",e:"Deep Sorrow"},{k:"해학적 흥",e:"Joy"},{k:"담백한 평온",e:"Peace"},{k:"강렬한 기개",e:"Spirit"},{k:"애절한 그리움",e:"Yearning"},{k:"숭고한 경외",e:"Awe"},{k:"서사적 웅장",e:"Epic"},{k:"단아한 기품",e:"Grace"},{k:"거친 생명력",e:"Wild"},{k:"신비로운 몽환",e:"Mystical"}]},
+        {s:"멜로디 장식",o:[{k:"농음",e:"Nongeum"},{k:"퇴성",e:"Toeseong"},{k:"추성",e:"Chuseong"},{k:"전성",e:"Jeonseong"},{k:"요성",e:"Yoseong"},{k:"평조",e:"Pyeongjo"},{k:"계면조",e:"Gyemyeonjo"},{k:"우조",e:"Ujo"},{k:"변화음",e:"Accidental"},{k:"반복 선율",e:"Repetitive"}]},
+        {s:"작업 용도",o:[{k:"다큐멘터리",e:"Documentary"},{k:"영화 오프닝",e:"Film Opening"},{k:"공연 오프닝",e:"Stage Intro"},{k:"명상 음악",e:"Meditation"},{k:"축제 배경",e:"Festival BGM"},{k:"전시관",e:"Exhibition"},{k:"유튜브",e:"YouTube"},{k:"드라마 테마",e:"Drama Theme"},{k:"광고",e:"AD"},{k:"해외 홍보",e:"Global"}]},
+        {s:"음계 체계",o:[{k:"5음 음계",e:"Pentatonic"},{k:"7음 확장",e:"Heptatonic"},{k:"반음계",e:"Chromatic"},{k:"민속 조율",e:"Folk Tuning"},{k:"궁상각치우",e:"Traditional Scale"},{k:"평조",e:"Pyeongjo"},{k:"계면조",e:"Gyemyeonjo"},{k:"변조 진행",e:"Modulation"},{k:"클래식 화성",e:"Classic Harmony"},{k:"재즈 화성",e:"Jazz Harmony"}]},
+        {s:"다이내믹스",o:[{k:"폭발적 타격",e:"Explosive"},{k:"잔잔한 여백",e:"Calm Space"},{k:"점진적 고조",e:"Crescendo"},{k:"급격한 변화",e:"Sudden Change"},{k:"섬세한 숨결",e:"Delicate"},{k:"묵직한 저음",e:"Heavy Low"},{k:"날카로운 고음",e:"Sharp High"},{k:"안정적 균형",e:"Balanced"},{k:"역동적 그루브",e:"Dynamic"},{k:"명상적 이완",e:"Meditative"}]},
+        {s:"입체 음향",o:[{k:"서라운드",e:"Surround"},{k:"3D 배치",e:"3D Placement"},{k:"현장감",e:"Live Presence"},{k:"스테레오",e:"Stereo Wide"},{k:"모노 정위감",e:"Mono Focus"},{k:"바이노럴",e:"Binaural"},{k:"반사음",e:"Reflection"},{k:"근접 마이킹",e:"Close Miking"},{k:"원거리",e:"Distant"},{k:"홀로그래픽",e:"Holographic"}]},
+        {s:"최종 믹스",o:[{k:"전통적 질감",e:"Traditional"},{k:"현대적 깔끔함",e:"Modern Clean"},{k:"아날로그 웜",e:"Analog Warm"},{k:"하이파이",e:"Hi-Fi"},{k:"시네마틱",e:"Cinematic"},{k:"라디오 송출",e:"Radio"},{k:"빈티지 로파이",e:"Vintage"},{k:"크리스탈",e:"Crystal"},{k:"따뜻한 목조",e:"Woody"},{k:"완벽 마감",e:"Final Master"}]}
+    ],
+    jazz: [
+        {s:"재즈 분과",o:[{k:"비밥",e:"Bebop"},{k:"쿨재즈",e:"Cool Jazz"},{k:"모달재즈",e:"Modal"},{k:"재즈 퓨전",e:"Fusion"},{k:"스윙",e:"Swing"},{k:"빅밴드",e:"Big Band"},{k:"보사노바",e:"Bossa Nova"},{k:"라틴 재즈",e:"Latin Jazz"},{k:"애시드 재즈",e:"Acid Jazz"},{k:"스무스 재즈",e:"Smooth Jazz"}]},
+        {s:"감성 테마",o:[{k:"심야 고독",e:"Midnight"},{k:"도시적",e:"Urban Chic"},{k:"빈티지 카페",e:"Vintage Cafe"},{k:"즉흥 연주",e:"Jam"},{k:"라운지",e:"Lounge"},{k:"자유",e:"Free Spirit"},{k:"노스탈지아",e:"Nostalgic"},{k:"낭만적 밤",e:"Romantic"},{k:"블루지 슬픔",e:"Bluesy"},{k:"경쾌함",e:"Upbeat"}]},
+        {s:"메인 솔로",o:[{k:"색소폰",e:"Saxophone"},{k:"트럼펫",e:"Trumpet"},{k:"재즈 피아노",e:"Jazz Piano"},{k:"할로우 기타",e:"Hollow Guitar"},{k:"트롬본",e:"Trombone"},{k:"클라리넷",e:"Clarinet"},{k:"비브라폰",e:"Vibraphone"},{k:"플루트",e:"Flute"},{k:"오르간",e:"Organ"},{k:"콘트라베이스",e:"Double Bass"}]},
+        {s:"보컬 스타일",o:[{k:"스캣",e:"Scat"},{k:"허스키 소울",e:"Husky"},{k:"벨벳 보이스",e:"Velvet"},{k:"레이지",e:"Lazy"},{k:"크루너",e:"Crooner"},{k:"트리오",e:"Trio"},{k:"바리톤",e:"Baritone"},{k:"가성",e:"Falsetto"},{k:"클럽 라이브",e:"Club Live"},{k:"아카펠라",e:"A Cappella"}]},
+        {s:"리듬 섹션",o:[{k:"워킹 베이스",e:"Walking Bass"},{k:"브러쉬 드럼",e:"Brush Drum"},{k:"스윙 비트",e:"Swing Beat"},{k:"보사노바",e:"Bossa"},{k:"셔플",e:"Shuffle"},{k:"싱코페이션",e:"Syncopation"},{k:"퍼커션",e:"Percussion"},{k:"고스트 노트",e:"Ghost Notes"},{k:"4비트",e:"4-Beat"},{k:"업템포",e:"Uptempo"}]},
+        {s:"코드 보이싱",o:[{k:"텐션 코드",e:"Tension"},{k:"13th",e:"13th"},{k:"클러스터",e:"Cluster"},{k:"모달 하모니",e:"Modal"},{k:"블루 노츠",e:"Blue Notes"},{k:"얼터드",e:"Altered"},{k:"9도",e:"9ths"},{k:"디미니쉬",e:"Diminished"},{k:"서스포",e:"Sus4"},{k:"대리 화음",e:"Substitution"}]},
+        {s:"현장감",o:[{k:"스모키 클럽",e:"Smoky Club"},{k:"라이브 녹음",e:"Live"},{k:"유리잔 소리",e:"Glass Clink"},{k:"박수 소리",e:"Applause"},{k:"뮤지션 호흡",e:"Breath"},{k:"작은 무대",e:"Small Stage"},{k:"뉴욕 클럽",e:"NYC Jazz"},{k:"언더그라운드",e:"Underground"},{k:"야외 축제",e:"Outdoor"},{k:"스튜디오 잼",e:"Studio"}]},
+        {s:"즉흥 연주",o:[{k:"긴 솔로",e:"Long Solo"},{k:"트레이딩",e:"Trading"},{k:"콜 앤 리스폰스",e:"Call and Response"},{k:"아르페지오",e:"Arpeggio"},{k:"서정적",e:"Lyrical"},{k:"실험적",e:"Experimental"},{k:"슬라이드",e:"Slide"},{k:"더블 타임",e:"Double Time"},{k:"글리산도",e:"Glissando"},{k:"뮤트",e:"Muted"}]},
+        {s:"피아노 터치",o:[{k:"라이트 터치",e:"Light"},{k:"해머링",e:"Hammering"},{k:"레가토",e:"Legato"},{k:"스타카토",e:"Staccato"},{k:"옥타브",e:"Octave"},{k:"댐퍼 페달",e:"Damper"},{k:"그레이스 노트",e:"Grace"},{k:"강한 타건",e:"Strong"},{k:"흐르는 선율",e:"Flowing"},{k:"미니멀",e:"Minimal"}]},
+        {s:"우드 베이스",o:[{k:"묵직함",e:"Heavy"},{k:"플럭 사운드",e:"Pluck"},{k:"슬랩",e:"Slap"},{k:"아르코",e:"Arco"},{k:"서스테인",e:"Sustain"},{k:"빠른 핑거링",e:"Fast"},{k:"뮤트 베이스",e:"Muted"},{k:"텍스처",e:"Woody"},{k:"그루비",e:"Groovy"},{k:"공명",e:"Resonance"}]},
+        {s:"앙상블 규모",o:[{k:"솔로",e:"Solo"},{k:"듀오",e:"Duo"},{k:"트리오",e:"Trio"},{k:"쿼텟",e:"Quartet"},{k:"퀸텟",e:"Quintet"},{k:"섹스텟",e:"Sextet"},{k:"셉텟",e:"Septet"},{k:"옥텟",e:"Octet"},{k:"빅밴드",e:"Big Band"},{k:"오케스트라",e:"Orchestra"}]},
+        {s:"청취 환경",o:[{k:"심야 라디오",e:"Radio"},{k:"레스토랑",e:"Dining"},{k:"와인 바",e:"Wine Bar"},{k:"서재",e:"Study"},{k:"드라이브",e:"Driving"},{k:"일요일 아침",e:"Morning"},{k:"비 오는 날",e:"Rainy"},{k:"명상",e:"Meditation"},{k:"파티",e:"Party BGM"},{k:"갤러리",e:"Gallery"}]},
+        {s:"다이내믹스",o:[{k:"섬세함",e:"Delicate"},{k:"폭발적 스윙",e:"Explosive"},{k:"잔잔함",e:"Subtle"},{k:"고조",e:"Crescendo"},{k:"멈춤",e:"Pause"},{k:"일관성",e:"Consistent"},{k:"유동적",e:"Fluid"},{k:"악센트",e:"Accent"},{k:"페이드",e:"Fade"},{k:"음압",e:"Powerful"}]},
+        {s:"음향 질감",o:[{k:"빈티지",e:"Vintage"},{k:"아날로그",e:"Warm"},{k:"선명함",e:"Clear"},{k:"테이프 노이즈",e:"Tape"},{k:"하이파이",e:"Hi-Fi"},{k:"로파이",e:"Lo-Fi"},{k:"거친 질감",e:"Rough"},{k:"스무스",e:"Silky"},{k:"공간감",e:"Spacious"},{k:"정제",e:"Refined"}]},
+        {s:"최종 마스터",o:[{k:"블루노트",e:"Blue Note"},{k:"스튜디오",e:"Studio"},{k:"3D",e:"Spatial"},{k:"진공관",e:"Tube"},{k:"로스리스",e:"Lossless"},{k:"8k",e:"8k"},{k:"마스터 테이프",e:"Master Tape"},{k:"하이엔드",e:"High-End"},{k:"방송 표준",e:"Broadcast"},{k:"완벽 마감",e:"Final"}]}
+    ],
+    classic: [
+        {s:"시대적 양식",o:[{k:"바로크",e:"Baroque"},{k:"고전주의",e:"Classical"},{k:"낭만주의",e:"Romantic"},{k:"현대음악",e:"Contemporary"},{k:"초기음악",e:"Early"},{k:"인상주의",e:"Impressionism"},{k:"표현주의",e:"Expressionism"},{k:"신고전주의",e:"Neoclassical"},{k:"미니멀리즘",e:"Minimalism"},{k:"아방가르드",e:"Avant-garde"}]},
+        {s:"편성 규모",o:[{k:"오케스트라",e:"Full Orchestra"},{k:"4중주",e:"Quartet"},{k:"독주",e:"Solo"},{k:"협주곡",e:"Concerto"},{k:"합창 교향곡",e:"Choral"},{k:"챔버",e:"Chamber"},{k:"듀오",e:"Duo"},{k:"트리오",e:"Trio"},{k:"서곡",e:"Overture"},{k:"모음곡",e:"Suite"}]},
+        {s:"곡의 정서",o:[{k:"웅장함",e:"Grandeur"},{k:"비극",e:"Tragic"},{k:"우아함",e:"Grace"},{k:"평온",e:"Pastoral"},{k:"열정",e:"Passionate"},{k:"신비",e:"Mystical"},{k:"유희",e:"Playful"},{k:"엄숙",e:"Solemn"},{k:"서정",e:"Lyricism"},{k:"고독",e:"Solitude"}]},
+        {s:"핵심 악기",o:[{k:"바이올린",e:"Violin"},{k:"첼로",e:"Cello"},{k:"피아노",e:"Piano"},{k:"플루트",e:"Flute"},{k:"오보에",e:"Oboe"},{k:"트럼펫",e:"Trumpet"},{k:"파이프 오르간",e:"Organ"},{k:"하프",e:"Harp"},{k:"팀파니",e:"Timpani"},{k:"클라리넷",e:"Clarinet"}]},
+        {s:"템포",o:[{k:"아다지오",e:"Adagio"},{k:"안단테",e:"Andante"},{k:"모데라토",e:"Moderato"},{k:"알레그로",e:"Allegro"},{k:"프레스토",e:"Presto"},{k:"라르고",e:"Largo"},{k:"비바체",e:"Vivace"},{k:"그라베",e:"Grave"},{k:"마에스트로소",e:"Maestoso"},{k:"칸타빌레",e:"Cantabile"}]},
+        {s:"화성법",o:[{k:"푸가",e:"Fugue"},{k:"카논",e:"Canon"},{k:"대위법",e:"Counterpoint"},{k:"조성",e:"Tonal"},{k:"무조",e:"Atonal"},{k:"불협화음",e:"Dissonance"},{k:"변조",e:"Modulation"},{k:"온음계",e:"Diatonic"},{k:"반음계",e:"Chromatic"},{k:"폴리포니",e:"Polyphony"}]},
+        {s:"공간 잔향",o:[{k:"대성당",e:"Cathedral"},{k:"빈 홀",e:"Vienna Hall"},{k:"오페라 하우스",e:"Opera"},{k:"실내악 홀",e:"Recital"},{k:"야외 극장",e:"Amphitheater"},{k:"스튜디오",e:"Studio"},{k:"연회장",e:"Ballroom"},{k:"동굴",e:"Cave"},{k:"무한 반향",e:"Infinite"},{k:"드라이",e:"Dry"}]},
+        {s:"연주 기법",o:[{k:"피치카토",e:"Pizzicato"},{k:"레가토",e:"Legato"},{k:"스타카토",e:"Staccato"},{k:"트레몰로",e:"Tremolo"},{k:"비브라토",e:"Vibrato"},{k:"글리산도",e:"Glissando"},{k:"뮤트",e:"Sordino"},{k:"더블 스토핑",e:"Double Stop"},{k:"아르페지오",e:"Arpeggio"},{k:"마르카토",e:"Marcato"}]},
+        {s:"다이내믹스",o:[{k:"피아니시모",e:"pp"},{k:"포르티시모",e:"ff"},{k:"크레센도",e:"Crescendo"},{k:"데크레센도",e:"Decrescendo"},{k:"스포르찬도",e:"sfz"},{k:"모렌도",e:"Morendo"},{k:"급변",e:"Sudden"},{k:"대비",e:"Contrast"},{k:"안정",e:"Steady"},{k:"폭발",e:"Explosive"}]},
+        {s:"금관",o:[{k:"호른",e:"Horn"},{k:"트롬본",e:"Trombone"},{k:"튜바",e:"Tuba"},{k:"트럼펫",e:"Trumpet"},{k:"뮤트 금관",e:"Muted"},{k:"히트",e:"Brass Hit"},{k:"5중주",e:"Quintet"},{k:"선포",e:"Heraldic"},{k:"부드러움",e:"Mellow"},{k:"화려함",e:"Brilliant"}]},
+        {s:"목관",o:[{k:"플루트",e:"Flute"},{k:"오보에",e:"Oboe"},{k:"바순",e:"Bassoon"},{k:"클라리넷",e:"Clarinet"},{k:"5중주",e:"Quintet"},{k:"스타카토",e:"Staccato"},{k:"서정",e:"Lyrical"},{k:"피콜로",e:"Piccolo"},{k:"앙상블",e:"Ensemble"},{k:"공기 질감",e:"Airy"}]},
+        {s:"합창",o:[{k:"혼성 4부",e:"SATB"},{k:"소년 합창",e:"Boys"},{k:"남성 유니즌",e:"Male"},{k:"소프라노",e:"Soprano"},{k:"코러스",e:"Epic Choir"},{k:"천상",e:"Celestial"},{k:"아카펠라",e:"A Cappella"},{k:"허밍",e:"Humming"},{k:"챈트",e:"Chant"},{k:"오페라",e:"Opera Chorus"}]},
+        {s:"음색 밀도",o:[{k:"여백",e:"Sparse"},{k:"두터움",e:"Thick"},{k:"투명",e:"Transparent"},{k:"풍성",e:"Rich Overtone"},{k:"날카로움",e:"Sharp"},{k:"목조",e:"Woody"},{k:"금속성",e:"Metallic"},{k:"실크",e:"Silky"},{k:"거침",e:"Rough"},{k:"벨벳",e:"Velvet"}]},
+        {s:"레코딩",o:[{k:"필드",e:"Field"},{k:"하이엔드",e:"Hi-End"},{k:"리본 마이크",e:"Ribbon"},{k:"AB",e:"A-B"},{k:"데카 트리",e:"Decca"},{k:"바이노럴",e:"Binaural"},{k:"멀티",e:"Multi"},{k:"카디오이드",e:"Cardioid"},{k:"옴니",e:"Omni"},{k:"테이프",e:"Tape"}]},
+        {s:"최종 감동",o:[{k:"눈물",e:"Tears"},{k:"카타르시스",e:"Catharsis"},{k:"평화",e:"Peace"},{k:"환희",e:"Joy"},{k:"철학",e:"Philosophical"},{k:"승화",e:"Sublimation"},{k:"안식",e:"Rest"},{k:"승리",e:"Victory"},{k:"여운",e:"Echo"},{k:"균형",e:"Balance"}]}
+    ],
+    kpop: [
+        {s:"아이돌 컨셉",o:[{k:"걸크러쉬",e:"Girl Crush"},{k:"청량",e:"Bright"},{k:"틴프레시",e:"Teen Fresh"},{k:"다크",e:"Dark"},{k:"시티팝",e:"City Pop"},{k:"스트릿",e:"Street"},{k:"판타지",e:"Fantasy"},{k:"로열",e:"Royal"},{k:"키치",e:"Kitsch"},{k:"스포티",e:"Sporty"}]},
+        {s:"에너지",o:[{k:"하이 텐션",e:"High"},{k:"몽환",e:"Ethereal"},{k:"파워",e:"Power"},{k:"칠링",e:"Chilling"},{k:"펑키",e:"Funky"},{k:"심장 박동",e:"Beat"},{k:"폭발",e:"Explosive"},{k:"유혹",e:"Seductive"},{k:"공격",e:"Attack"},{k:"상쾌",e:"Refreshing"}]},
+        {s:"리드 사운드",o:[{k:"신스",e:"Synth"},{k:"플럭",e:"Pluck"},{k:"브라스",e:"Brass"},{k:"기타",e:"Guitar"},{k:"보컬 찹",e:"Vocal Chop"},{k:"벨",e:"Bell"},{k:"디스토션",e:"Distortion"},{k:"퓨처 베이스",e:"Future"},{k:"808 베이스",e:"808"},{k:"코드",e:"Chords"}]},
+        {s:"보컬",o:[{k:"싱잉 랩",e:"Singing Rap"},{k:"하이노트",e:"High Note"},{k:"위스퍼",e:"Whisper"},{k:"오토튠",e:"Auto-tune"},{k:"화음",e:"Harmony"},{k:"허스키",e:"Husky"},{k:"가성",e:"Falsetto"},{k:"챈팅",e:"Chanting"},{k:"소울",e:"Soulful"},{k:"청아",e:"Pure"}]},
+        {s:"드럼",o:[{k:"트랩",e:"Trap"},{k:"퓨처",e:"Future Drop"},{k:"디스코",e:"Disco"},{k:"하우스",e:"House"},{k:"붐뱁",e:"Boom Bap"},{k:"덥스텝",e:"Dubstep"},{k:"펑키",e:"Funky"},{k:"팝",e:"Pop"},{k:"808",e:"808 Machine"},{k:"하이브리드",e:"Hybrid"}]},
+        {s:"효과음",o:[{k:"라이저",e:"Riser"},{k:"다운",e:"Down"},{k:"글리치",e:"Glitch"},{k:"리버스",e:"Reverse"},{k:"시그니처",e:"Signature"},{k:"화이트",e:"White Noise"},{k:"서브",e:"Sub Drop"},{k:"게임",e:"Game"},{k:"웅장",e:"Boom"},{k:"필터",e:"Phone"}]},
+        {s:"공간",o:[{k:"와이드",e:"Wide"},{k:"전면",e:"In-face"},{k:"깊은 리버브",e:"Deep"},{k:"클럽",e:"Club"},{k:"스타디움",e:"Stadium"},{k:"우주",e:"Cosmic"},{k:"수중",e:"Underwater"},{k:"좁은",e:"Narrow"},{k:"라운지",e:"Lounge"},{k:"버추얼",e:"Virtual"}]},
+        {s:"구조",o:[{k:"훅",e:"Hook"},{k:"드롭",e:"Drop"},{k:"댄스브레이크",e:"Dance Break"},{k:"브릿지",e:"Bridge"},{k:"아웃트로",e:"Outro"},{k:"루프",e:"Loop"},{k:"프리코러스",e:"Pre-chorus"},{k:"내레이션",e:"Narration"},{k:"클라이맥스",e:"Climax"},{k:"페이드",e:"Fade Out"}]},
+        {s:"베이스",o:[{k:"808",e:"808 Sub"},{k:"리스",e:"Reese"},{k:"슬랩",e:"Slap"},{k:"무그",e:"Moog"},{k:"서브",e:"Sub Boom"},{k:"디스토션",e:"Saw"},{k:"일렉",e:"Electric"},{k:"플럭",e:"Pluck"},{k:"헤비",e:"Heavy"},{k:"업라이트",e:"Upright"}]},
+        {s:"질감",o:[{k:"금속성",e:"Metallic"},{k:"바삭함",e:"Crispy"},{k:"매끄러움",e:"Polished"},{k:"펀치",e:"Punchy"},{k:"샤인",e:"Digital"},{k:"로파이",e:"Lo-fi"},{k:"웜",e:"Organic"},{k:"하이퍼",e:"Hyper Pop"},{k:"왜곡",e:"Aggressive"},{k:"크리스탈",e:"Crystal"}]},
+        {s:"중독요소",o:[{k:"안무",e:"Dance"},{k:"가사",e:"Lyrics"},{k:"변칙 박자",e:"Irregular"},{k:"킬링파트",e:"Killing"},{k:"떼창",e:"Singalong"},{k:"기믹",e:"Gimmick"},{k:"위스퍼",e:"Whisper"},{k:"선율",e:"Melody"},{k:"빠른 랩",e:"Fast Rap"},{k:"찹",e:"Chop"}]},
+        {s:"용도",o:[{k:"뮤비",e:"MV"},{k:"챌린지",e:"Challenge"},{k:"무대",e:"Stage"},{k:"라디오",e:"Radio"},{k:"광고",e:"AD"},{k:"게임",e:"Game"},{k:"스트리밍",e:"Streaming"},{k:"클럽",e:"Club"},{k:"차트",e:"Chart"},{k:"티저",e:"Teaser"}]},
+        {s:"압축",o:[{k:"강함",e:"Hard"},{k:"다이내믹",e:"Dynamic"},{k:"단단함",e:"Solid"},{k:"음압",e:"Loudness"},{k:"클린",e:"Clean"},{k:"웜",e:"Warm"},{k:"라디오",e:"Radio"},{k:"거침",e:"Rough"},{k:"스무스",e:"Smooth"},{k:"디지털",e:"Digital"}]},
+        {s:"스테레오",o:[{k:"하이퍼",e:"Hyper-wide"},{k:"무브먼트",e:"Moving"},{k:"센터",e:"Center"},{k:"홀로그램",e:"Hologram"},{k:"3D",e:"3D"},{k:"서라운드",e:"Surround"},{k:"원근",e:"Depth"},{k:"핑퐁",e:"Ping-pong"},{k:"와이드",e:"Wide"},{k:"모노",e:"Mono"}]},
+        {s:"최종",o:[{k:"글로벌",e:"Global"},{k:"무손실",e:"Lossless"},{k:"스튜디오",e:"Studio"},{k:"하이파이",e:"Hi-Fi"},{k:"8k",e:"8k"},{k:"디지털 완벽",e:"Perfect"},{k:"아날로그",e:"Analog"},{k:"선명",e:"Clarity"},{k:"폴리싱",e:"Polish"},{k:"마술",e:"Magic"}]}
+    ],
+    ballad: [
+        {s:"발라드 성향",o:[{k:"정통",e:"Traditional"},{k:"R&B",e:"R&B"},{k:"팝",e:"Pop"},{k:"락",e:"Rock"},{k:"어쿠스틱",e:"Acoustic"},{k:"오케스트랄",e:"Orchestral"},{k:"시티팝",e:"City Pop"},{k:"재즈",e:"Jazz"},{k:"OST",e:"OST"},{k:"인디",e:"Indie"}]},
+        {s:"슬픔",o:[{k:"절망",e:"Desperate"},{k:"담담",e:"Calm"},{k:"그리움",e:"Yearning"},{k:"위로",e:"Healing"},{k:"설렘",e:"Sweet"},{k:"후회",e:"Regret"},{k:"고독",e:"Lonely"},{k:"아름다움",e:"Beautiful"},{k:"한",e:"Deep"},{k:"희망",e:"Hopeful"}]},
+        {s:"악기",o:[{k:"피아노",e:"Piano"},{k:"기타",e:"Guitar"},{k:"나일론",e:"Nylon"},{k:"첼로",e:"Cello"},{k:"EP",e:"Rhodes"},{k:"색소폰",e:"Sax"},{k:"바이올린",e:"Violin"},{k:"오르간",e:"Organ"},{k:"하프",e:"Harp"},{k:"패드",e:"Pad"}]},
+        {s:"보컬",o:[{k:"호소력",e:"Soulful"},{k:"투명",e:"Pure"},{k:"허스키",e:"Husky"},{k:"가성",e:"Falsetto"},{k:"속삭임",e:"Whisper"},{k:"파워",e:"Power"},{k:"바리톤",e:"Deep"},{k:"소프라노",e:"High"},{k:"중음",e:"Stable"},{k:"그루비",e:"Groovy"}]},
+        {s:"드럼",o:[{k:"없음",e:"None"},{k:"림샷",e:"Rimshot"},{k:"브러쉬",e:"Brush"},{k:"가세",e:"Gradual"},{k:"스네어",e:"Snare"},{k:"라이브",e:"Live"},{k:"8비트",e:"8-beat"},{k:"킥",e:"Dynamic"},{k:"심벌",e:"Swell"},{k:"전자",e:"Electronic"}]},
+        {s:"베이스",o:[{k:"콘트라",e:"Double Bass"},{k:"일렉",e:"Electric"},{k:"신스",e:"Synth"},{k:"저음",e:"Heavy"},{k:"멜로딕",e:"Melodic"},{k:"스테디",e:"Steady"},{k:"드라이브",e:"Driven"},{k:"핑거",e:"Finger"},{k:"서브",e:"Sub"},{k:"프렛리스",e:"Fretless"}]},
+        {s:"스트링",o:[{k:"풀",e:"Full"},{k:"4중주",e:"Quartet"},{k:"첼로",e:"Solo Cello"},{k:"바이올린",e:"Violin Section"},{k:"시네마틱",e:"Cinematic"},{k:"피치카토",e:"Pizzicato"},{k:"스타카토",e:"Staccato"},{k:"레가토",e:"Legato"},{k:"에테리얼",e:"Ethereal"},{k:"빈티지",e:"Vintage"}]},
+        {s:"공간",o:[{k:"홀",e:"Hall"},{k:"방",e:"Room"},{k:"스튜디오",e:"Studio"},{k:"안개",e:"Fog"},{k:"비",e:"Rain"},{k:"심야",e:"Midnight"},{k:"대성당",e:"Cathedral"},{k:"우주",e:"Cosmic"},{k:"자연",e:"Nature"},{k:"카페",e:"Cafe"}]},
+        {s:"전개",o:[{k:"빌드업",e:"Build-up"},{k:"클라이맥스",e:"Climax"},{k:"엔딩",e:"Ending"},{k:"평온",e:"Flowing"},{k:"드롭",e:"Drop"},{k:"브릿지",e:"Bridge"},{k:"인트로",e:"Intro"},{k:"페이드",e:"Fade"},{k:"반복",e:"Loop"},{k:"서사",e:"Epic"}]},
+        {s:"화음",o:[{k:"레이어",e:"Layer"},{k:"여성",e:"Female"},{k:"남성",e:"Male"},{k:"콰이어",e:"Choir"},{k:"더블링",e:"Doubling"},{k:"가스펠",e:"Gospel"},{k:"아카펠라",e:"A Cappella"},{k:"허밍",e:"Humming"},{k:"훅",e:"Hook"},{k:"클래식",e:"Classic"}]},
+        {s:"질감",o:[{k:"웜",e:"Warm"},{k:"디지털",e:"Digital"},{k:"로파이",e:"Lo-fi"},{k:"실크",e:"Silky"},{k:"거침",e:"Rough"},{k:"오가닉",e:"Organic"},{k:"하이파이",e:"Hi-Fi"},{k:"몽환",e:"Dreamy"},{k:"펀치",e:"Punchy"},{k:"정제",e:"Refined"}]},
+        {s:"테마",o:[{k:"계절",e:"Seasons"},{k:"시간",e:"Time"},{k:"이동",e:"Journey"},{k:"꿈",e:"Dream"},{k:"삶",e:"Life"},{k:"신비",e:"Mystery"},{k:"도시",e:"Urban"},{k:"향수",e:"Nostalgia"},{k:"별",e:"Stars"},{k:"바다",e:"Sea"}]},
+        {s:"다이내믹스",o:[{k:"동적폭",e:"Wide"},{k:"안정",e:"Steady"},{k:"폭발",e:"Explosive"},{k:"섬세",e:"Delicate"},{k:"압축",e:"Compressed"},{k:"현장감",e:"Live"},{k:"깔끔",e:"Refined"},{k:"울림",e:"Overwhelming"},{k:"스무스",e:"Smooth"},{k:"임팩트",e:"Heavy"}]},
+        {s:"멜로디",o:[{k:"캐치",e:"Catchy"},{k:"예술성",e:"Artistic"},{k:"반복",e:"Repetitive"},{k:"도약",e:"Leaping"},{k:"순차",e:"Stepwise"},{k:"블루지",e:"Bluesy"},{k:"클래식",e:"Classic"},{k:"팝",e:"Pop"},{k:"서정",e:"Lyrical"},{k:"훅",e:"Hook"}]},
+        {s:"최종",o:[{k:"방송",e:"Broadcast"},{k:"하이레졸",e:"Hi-Res"},{k:"3D",e:"Spatial"},{k:"음압",e:"Loudness"},{k:"마감",e:"Pristine"},{k:"테이프",e:"Tape"},{k:"라디오",e:"Radio"},{k:"헤드폰",e:"Headphone"},{k:"프로",e:"Pro"},{k:"표준",e:"Standard"}]}
+    ],
+    hiphop: [
+        {s:"분과",o:[{k:"트랩",e:"Trap"},{k:"붐뱁",e:"Boom Bap"},{k:"드릴",e:"Drill"},{k:"그라임",e:"Grime"},{k:"올드스쿨",e:"Old School"},{k:"뉴스쿨",e:"New School"},{k:"클라우드",e:"Cloud"},{k:"웨스트",e:"West"},{k:"이스트",e:"East"},{k:"재즈",e:"Jazz"}]},
+        {s:"에너지",o:[{k:"헤비",e:"Heavy"},{k:"칠링",e:"Chilling"},{k:"공격",e:"Aggressive"},{k:"몽환",e:"Dreamy"},{k:"파워",e:"Powerful"},{k:"그루비",e:"Groovy"},{k:"우울",e:"Melancholy"},{k:"하이퍼",e:"Hyper"},{k:"미니멀",e:"Minimal"},{k:"시네마틱",e:"Cinematic"}]},
+        {s:"샘플",o:[{k:"소울",e:"Soul"},{k:"히트",e:"Hit"},{k:"피아노",e:"Piano"},{k:"보컬 찹",e:"Vocal Chop"},{k:"현악기",e:"Pizzicato"},{k:"벨",e:"Bell"},{k:"플럭",e:"Pluck"},{k:"기타",e:"Guitar"},{k:"혼",e:"Horn"},{k:"자연",e:"Nature"}]},
+        {s:"랩",o:[{k:"빠른 랩",e:"Fast"},{k:"레이백",e:"Layback"},{k:"싱잉",e:"Singing"},{k:"멈블",e:"Mumble"},{k:"위스퍼",e:"Whisper"},{k:"오토튠",e:"Auto-tune"},{k:"하드코어",e:"Hardcore"},{k:"시적",e:"Poetic"},{k:"내레이션",e:"Narration"},{k:"챈트",e:"Chant"}]},
+        {s:"808",o:[{k:"롱",e:"Long"},{k:"펀치",e:"Punchy"},{k:"디스토션",e:"Distorted"},{k:"슬라이드",e:"Slide"},{k:"박동",e:"Heartbeat"},{k:"서브",e:"Sub"},{k:"그로울",e:"Growl"},{k:"멜로딕",e:"Melodic"},{k:"로우",e:"Low"},{k:"리스",e:"Reese"}]},
+        {s:"드럼",o:[{k:"스네어",e:"Snare"},{k:"킥",e:"Kick"},{k:"롤",e:"Roll"},{k:"클랩",e:"Clap"},{k:"림샷",e:"Rimshot"},{k:"어쿠스틱",e:"Acoustic"},{k:"전자",e:"Electronic"},{k:"로파이",e:"Lo-fi"},{k:"퍼커션",e:"Percussion"},{k:"글리치",e:"Glitch"}]},
+        {s:"공간",o:[{k:"와이드",e:"Wide"},{k:"드라이",e:"Dry"},{k:"리버브",e:"Deep"},{k:"클럽",e:"Club"},{k:"골목",e:"Alley"},{k:"스타디움",e:"Stadium"},{k:"방",e:"Room"},{k:"차고",e:"Garage"},{k:"우주",e:"Cosmic"},{k:"수중",e:"Underwater"}]},
+        {s:"효과",o:[{k:"라이저",e:"Riser"},{k:"리버스",e:"Reverse"},{k:"스크래치",e:"Scratch"},{k:"사이렌",e:"Siren"},{k:"총성",e:"Gun"},{k:"함성",e:"Crowd"},{k:"전화",e:"Phone"},{k:"라디오",e:"Radio"},{k:"비",e:"Rain"},{k:"시그니처",e:"Signature"}]},
+        {s:"무드",o:[{k:"차갑움",e:"Cold"},{k:"뜨거움",e:"Hot"},{k:"고급",e:"Luxury"},{k:"거침",e:"Gritty"},{k:"우아",e:"Elegant"},{k:"신비",e:"Mysterious"},{k:"공포",e:"Horror"},{k:"희망",e:"Hopeful"},{k:"반항",e:"Rebellious"},{k:"차분",e:"Calm"}]},
+        {s:"리듬",o:[{k:"정박",e:"On-beat"},{k:"엇박",e:"Off-beat"},{k:"트리플렛",e:"Triplet"},{k:"폴리",e:"Poly"},{k:"중단",e:"Stop-go"},{k:"빌드업",e:"Build-up"},{k:"드롭",e:"Drop"},{k:"루프",e:"Loop"},{k:"변칙",e:"Irregular"},{k:"슬로우",e:"Slow"}]},
+        {s:"믹싱",o:[{k:"보컬 앞",e:"Vocal"},{k:"베이스",e:"Bass"},{k:"하이햇",e:"Hi-hat"},{k:"균형",e:"Balanced"},{k:"공격",e:"Aggressive"},{k:"부드러움",e:"Smooth"},{k:"빈티지",e:"Vintage"},{k:"클린",e:"Clean"},{k:"서라운드",e:"Surround"},{k:"로파이",e:"Lo-fi"}]},
+        {s:"용도",o:[{k:"뮤비",e:"MV"},{k:"공연",e:"Club"},{k:"틱톡",e:"TikTok"},{k:"배경",e:"BGM"},{k:"광고",e:"AD"},{k:"영화",e:"Film"},{k:"게임",e:"Game"},{k:"운동",e:"Fitness"},{k:"파티",e:"Party"},{k:"드라이브",e:"Driving"}]},
+        {s:"중독",o:[{k:"선율",e:"Signature"},{k:"훅",e:"Hook"},{k:"사운드",e:"Unique"},{k:"킬링",e:"Killing"},{k:"베이스",e:"Heavy"},{k:"가사",e:"Lyrics"},{k:"드롭",e:"Drop"},{k:"도입",e:"Intro"},{k:"아웃트로",e:"Outro"},{k:"변칙",e:"Variation"}]},
+        {s:"마스터",o:[{k:"음압",e:"Loudness"},{k:"펀치",e:"Punchy"},{k:"와이드",e:"Wide"},{k:"선명",e:"Crystal"},{k:"웜",e:"Warm"},{k:"하이레졸",e:"Hi-Res"},{k:"라디오",e:"Radio"},{k:"헤드폰",e:"Headphone"},{k:"서라운드",e:"Surround"},{k:"폴리싱",e:"Final"}]},
+        {s:"입체",o:[{k:"3D",e:"3D"},{k:"바이노럴",e:"Binaural"},{k:"패닝",e:"Auto-pan"},{k:"원근",e:"Depth"},{k:"7.1",e:"7.1"},{k:"센터",e:"Center"},{k:"앰비언트",e:"Ambient"},{k:"홀로그램",e:"Hologram"},{k:"사이드",e:"Side"},{k:"동적",e:"Dynamic"}]}
+    ],
+    rock: [
+        {s:"분과",o:[{k:"모던락",e:"Modern"},{k:"하드락",e:"Hard Rock"},{k:"메탈",e:"Metal"},{k:"펑크",e:"Punk"},{k:"얼터",e:"Alternative"},{k:"브릿팝",e:"Britpop"},{k:"사이키",e:"Psychedelic"},{k:"프로그레시브",e:"Prog"},{k:"그런지",e:"Grunge"},{k:"데스메탈",e:"Death Metal"}]},
+        {s:"기타",o:[{k:"클린",e:"Clean"},{k:"오버드라이브",e:"OD"},{k:"디스토션",e:"Dist"},{k:"퍼즈",e:"Fuzz"},{k:"와와",e:"Wah"},{k:"어쿠스틱",e:"Acoustic"},{k:"뮤트",e:"Mute"},{k:"슬라이드",e:"Slide"},{k:"탭핑",e:"Tapping"},{k:"피드백",e:"Feedback"}]},
+        {s:"드럼",o:[{k:"강력",e:"Powerful"},{k:"빠름",e:"Fast"},{k:"그루비",e:"Groovy"},{k:"더블킥",e:"Double Kick"},{k:"심벌",e:"Cymbals"},{k:"스네어",e:"Snare"},{k:"탐탐",e:"Tom"},{k:"브러쉬",e:"Brush"},{k:"전자",e:"Electronic"},{k:"라이브",e:"Live"}]},
+        {s:"베이스",o:[{k:"픽",e:"Pick"},{k:"핑거",e:"Finger"},{k:"슬랩",e:"Slap"},{k:"드라이브",e:"Driven"},{k:"로우",e:"Low"},{k:"워킹",e:"Walking"},{k:"무거운",e:"Heavy"},{k:"펀치",e:"Punchy"},{k:"신스",e:"Synth"},{k:"리스",e:"Reese"}]},
+        {s:"보컬",o:[{k:"샤우팅",e:"Shouting"},{k:"그로울링",e:"Growl"},{k:"클린",e:"Clean"},{k:"허스키",e:"Husky"},{k:"팔세토",e:"Falsetto"},{k:"레이어",e:"Layer"},{k:"코러스",e:"Chorus"},{k:"위스퍼",e:"Whisper"},{k:"스크리밍",e:"Scream"},{k:"멜로딕",e:"Melodic"}]},
+        {s:"솔로",o:[{k:"화려",e:"Brilliant"},{k:"짧음",e:"Short"},{k:"서정",e:"Lyrical"},{k:"테크니컬",e:"Technical"},{k:"블루지",e:"Bluesy"},{k:"와와",e:"Wah"},{k:"트레몰로",e:"Tremolo"},{k:"피드백",e:"Feedback"},{k:"옥타브",e:"Octave"},{k:"반복",e:"Repetitive"}]},
+        {s:"공간",o:[{k:"라이브",e:"Live Hall"},{k:"차고",e:"Garage"},{k:"스타디움",e:"Stadium"},{k:"스튜디오",e:"Studio"},{k:"클럽",e:"Club"},{k:"야외",e:"Outdoor"},{k:"드라이",e:"Dry"},{k:"와이드",e:"Wide"},{k:"동굴",e:"Cave"},{k:"우주",e:"Cosmic"}]},
+        {s:"에너지",o:[{k:"폭발",e:"Explosive"},{k:"안정",e:"Steady"},{k:"고조",e:"Build"},{k:"감소",e:"Fade"},{k:"반복",e:"Loop"},{k:"변칙",e:"Irregular"},{k:"강렬",e:"Intense"},{k:"서정",e:"Lyrical"},{k:"어두움",e:"Dark"},{k:"밝음",e:"Bright"}]},
+        {s:"신스",o:[{k:"패드",e:"Pad"},{k:"리드",e:"Lead"},{k:"벨",e:"Bell"},{k:"플럭",e:"Pluck"},{k:"아르페지오",e:"Arp"},{k:"스트링",e:"Strings"},{k:"오르간",e:"Organ"},{k:"피아노",e:"Piano"},{k:"노이즈",e:"Noise"},{k:"없음",e:"None"}]},
+        {s:"리듬",o:[{k:"4비트",e:"4-beat"},{k:"8비트",e:"8-beat"},{k:"16비트",e:"16-beat"},{k:"셔플",e:"Shuffle"},{k:"변박",e:"Odd"},{k:"싱코",e:"Syncopation"},{k:"스트레이트",e:"Straight"},{k:"레이백",e:"Layback"},{k:"질주",e:"Driving"},{k:"슬로우",e:"Slow"}]},
+        {s:"질감",o:[{k:"거침",e:"Rough"},{k:"부드러움",e:"Smooth"},{k:"날카로움",e:"Sharp"},{k:"따뜻함",e:"Warm"},{k:"금속성",e:"Metallic"},{k:"아날로그",e:"Analog"},{k:"디지털",e:"Digital"},{k:"빈티지",e:"Vintage"},{k:"클린",e:"Clean"},{k:"왜곡",e:"Distorted"}]},
+        {s:"목적",o:[{k:"공연",e:"Live"},{k:"앨범",e:"Album"},{k:"광고",e:"AD"},{k:"영화",e:"Film"},{k:"게임",e:"Game"},{k:"배경",e:"BGM"},{k:"운동",e:"Fitness"},{k:"파티",e:"Party"},{k:"드라이브",e:"Driving"},{k:"유튜브",e:"YouTube"}]},
+        {s:"음압",o:[{k:"강력",e:"Loud"},{k:"중간",e:"Medium"},{k:"약함",e:"Soft"},{k:"동적",e:"Dynamic"},{k:"압축",e:"Compressed"},{k:"펀치",e:"Punchy"},{k:"와이드",e:"Wide"},{k:"선명",e:"Clear"},{k:"웅장",e:"Epic"},{k:"평탄",e:"Flat"}]},
+        {s:"멜로디",o:[{k:"캐치",e:"Catchy"},{k:"복잡",e:"Complex"},{k:"단순",e:"Simple"},{k:"반복",e:"Repetitive"},{k:"도약",e:"Leaping"},{k:"서정",e:"Lyrical"},{k:"공격",e:"Attack"},{k:"우울",e:"Dark"},{k:"희망",e:"Bright"},{k:"훅",e:"Hook"}]},
+        {s:"품질",o:[{k:"마스터",e:"Master"},{k:"하이파이",e:"Hi-Fi"},{k:"하이레졸",e:"Hi-Res"},{k:"라디오",e:"Radio"},{k:"방송",e:"Broadcast"},{k:"서라운드",e:"Surround"},{k:"3D",e:"3D"},{k:"무손실",e:"Lossless"},{k:"스튜디오",e:"Studio"},{k:"최종",e:"Final"}]}
+    ],
+    lofi: [
+        {s:"무드",o:[{k:"칠아웃",e:"Chill"},{k:"스터디",e:"Study"},{k:"재즈",e:"Jazz"},{k:"앰비언트",e:"Ambient"},{k:"빈티지",e:"Vintage"},{k:"노스탈직",e:"Nostalgic"},{k:"드림",e:"Dreamy"},{k:"미니멀",e:"Minimal"},{k:"시티",e:"City"},{k:"서머",e:"Summer"}]},
+        {s:"악기",o:[{k:"피아노",e:"Piano"},{k:"기타",e:"Guitar"},{k:"EP",e:"Rhodes"},{k:"섹소폰",e:"Sax"},{k:"플루트",e:"Flute"},{k:"하프",e:"Harp"},{k:"벨",e:"Bell"},{k:"패드",e:"Pad"},{k:"오르간",e:"Organ"},{k:"없음",e:"None"}]},
+        {s:"노이즈",o:[{k:"LP",e:"Vinyl"},{k:"비",e:"Rain"},{k:"카페",e:"Cafe"},{k:"자연",e:"Nature"},{k:"전파",e:"Static"},{k:"테이프",e:"Tape"},{k:"바람",e:"Wind"},{k:"파도",e:"Wave"},{k:"숲",e:"Forest"},{k:"도시",e:"Urban"}]},
+        {s:"드럼",o:[{k:"붐뱁",e:"Boom Bap"},{k:"미니멀",e:"Minimal"},{k:"부드러움",e:"Soft"},{k:"거침",e:"Rough"},{k:"킥",e:"Kick"},{k:"스네어",e:"Snare"},{k:"하이햇",e:"Hihat"},{k:"셔플",e:"Shuffle"},{k:"없음",e:"None"},{k:"로파이",e:"Lo-fi"}]},
+        {s:"보컬",o:[{k:"샘플",e:"Sample"},{k:"위스퍼",e:"Whisper"},{k:"허밍",e:"Humming"},{k:"영화대사",e:"Dialogue"},{k:"내레이션",e:"Narration"},{k:"가성",e:"Falsetto"},{k:"레이어",e:"Layer"},{k:"몽환",e:"Dreamy"},{k:"없음",e:"None"},{k:"로파이",e:"Lo-fi"}]},
+        {s:"베이스",o:[{k:"업라이트",e:"Upright"},{k:"일렉",e:"Electric"},{k:"신스",e:"Synth"},{k:"서브",e:"Sub"},{k:"부드러움",e:"Smooth"},{k:"묵직함",e:"Heavy"},{k:"그루비",e:"Groovy"},{k:"워킹",e:"Walking"},{k:"단순",e:"Simple"},{k:"없음",e:"None"}]},
+        {s:"필터",o:[{k:"LPF",e:"LPF"},{k:"HPF",e:"HPF"},{k:"전화기",e:"Phone"},{k:"라디오",e:"Radio"},{k:"빈티지",e:"Vintage"},{k:"왜곡",e:"Distortion"},{k:"비트크러셔",e:"Bitcrush"},{k:"스무스",e:"Smooth"},{k:"없음",e:"None"},{k:"강함",e:"Strong"}]},
+        {s:"공간",o:[{k:"작은방",e:"Room"},{k:"스튜디오",e:"Studio"},{k:"야외",e:"Outdoor"},{k:"넓음",e:"Wide"},{k:"깊음",e:"Deep"},{k:"드라이",e:"Dry"},{k:"동굴",e:"Cave"},{k:"우주",e:"Cosmic"},{k:"수중",e:"Underwater"},{k:"꿈",e:"Dream"}]},
+        {s:"템포",o:[{k:"60bpm",e:"60"},{k:"70bpm",e:"70"},{k:"80bpm",e:"80"},{k:"90bpm",e:"90"},{k:"슬로우",e:"Slow"},{k:"미디움",e:"Medium"},{k:"안정",e:"Steady"},{k:"유동",e:"Fluid"},{k:"매우느림",e:"Very Slow"},{k:"일정",e:"Constant"}]},
+        {s:"멜로디",o:[{k:"단순",e:"Simple"},{k:"반복",e:"Repetitive"},{k:"서정",e:"Lyrical"},{k:"재즈",e:"Jazz"},{k:"몽환",e:"Dreamy"},{k:"우울",e:"Sad"},{k:"행복",e:"Happy"},{k:"없음",e:"None"},{k:"캐치",e:"Catchy"},{k:"아르페지오",e:"Arp"}]},
+        {s:"질감",o:[{k:"따뜻함",e:"Warm"},{k:"차가움",e:"Cold"},{k:"거침",e:"Rough"},{k:"부드러움",e:"Smooth"},{k:"먼지",e:"Dusty"},{k:"아날로그",e:"Analog"},{k:"디지털",e:"Digital"},{k:"빈티지",e:"Vintage"},{k:"로파이",e:"Lo-fi"},{k:"정제",e:"Refined"}]},
+        {s:"목적",o:[{k:"공부",e:"Study"},{k:"휴식",e:"Relax"},{k:"수면",e:"Sleep"},{k:"배경",e:"BGM"},{k:"카페",e:"Cafe"},{k:"작업",e:"Work"},{k:"드라이브",e:"Drive"},{k:"명상",e:"Meditation"},{k:"유튜브",e:"YouTube"},{k:"독서",e:"Read"}]},
+        {s:"다이내믹스",o:[{k:"일정",e:"Steady"},{k:"부드러움",e:"Soft"},{k:"약함",e:"Weak"},{k:"동적",e:"Dynamic"},{k:"압축",e:"Compressed"},{k:"펀치",e:"Punchy"},{k:"와이드",e:"Wide"},{k:"선명",e:"Clear"},{k:"로파이",e:"Lo-fi"},{k:"평탄",e:"Flat"}]},
+        {s:"스테레오",o:[{k:"와이드",e:"Wide"},{k:"중앙",e:"Center"},{k:"패닝",e:"Pan"},{k:"3D",e:"3D"},{k:"서라운드",e:"Surround"},{k:"원근",e:"Depth"},{k:"공간",e:"Space"},{k:"모노",e:"Mono"},{k:"홀로그램",e:"Hologram"},{k:"동적",e:"Dynamic"}]},
+        {s:"최종",o:[{k:"마스터",e:"Master"},{k:"하이파이",e:"Hi-Fi"},{k:"하이레졸",e:"Hi-Res"},{k:"방송",e:"Broadcast"},{k:"무손실",e:"Lossless"},{k:"스튜디오",e:"Studio"},{k:"최종",e:"Final"},{k:"테이프",e:"Tape"},{k:"라디오",e:"Radio"},{k:"로파이",e:"Lo-fi"}]}
+    ],
+    cinema: [
+        {s:"장르",o:[{k:"에픽",e:"Epic"},{k:"액션",e:"Action"},{k:"스릴러",e:"Thriller"},{k:"호러",e:"Horror"},{k:"SF",e:"SF"},{k:"드라마",e:"Drama"},{k:"다큐",e:"Docu"},{k:"애니",e:"Anime"},{k:"서스펜스",e:"Suspense"},{k:"판타지",e:"Fantasy"}]},
+        {s:"오케",o:[{k:"전체",e:"Full"},{k:"현악",e:"Strings"},{k:"금관",e:"Brass"},{k:"목관",e:"Winds"},{k:"타악",e:"Percussion"},{k:"챔버",e:"Chamber"},{k:"솔로",e:"Solo"},{k:"하이브리드",e:"Hybrid"},{k:"신스",e:"Synth"},{k:"없음",e:"None"}]},
+        {s:"퍼커션",o:[{k:"웅장",e:"Epic"},{k:"빠름",e:"Fast"},{k:"금속",e:"Metal"},{k:"우드",e:"Wood"},{k:"전자",e:"Electronic"},{k:"하이브리드",e:"Hybrid"},{k:"심벌",e:"Cymbal"},{k:"타이코",e:"Taiko"},{k:"팀파니",e:"Timpani"},{k:"없음",e:"None"}]},
+        {s:"신스",o:[{k:"패드",e:"Pad"},{k:"리드",e:"Lead"},{k:"베이스",e:"Bass"},{k:"플럭",e:"Pluck"},{k:"아르페지오",e:"Arp"},{k:"스트링",e:"Strings"},{k:"노이즈",e:"Noise"},{k:"글리치",e:"Glitch"},{k:"엠비언트",e:"Ambient"},{k:"없음",e:"None"}]},
+        {s:"보컬",o:[{k:"콰이어",e:"Choir"},{k:"솔로",e:"Solo"},{k:"허밍",e:"Humming"},{k:"챈트",e:"Chant"},{k:"천상",e:"Celestial"},{k:"공포",e:"Horror"},{k:"영화대사",e:"Dialogue"},{k:"내레이션",e:"Narration"},{k:"레이어",e:"Layer"},{k:"없음",e:"None"}]},
+        {s:"강도",o:[{k:"매우강함",e:"Max"},{k:"강함",e:"Strong"},{k:"중간",e:"Medium"},{k:"약함",e:"Weak"},{k:"부드러움",e:"Soft"},{k:"동적",e:"Dynamic"},{k:"빌드업",e:"Build"},{k:"폭발",e:"Explosive"},{k:"잔잔함",e:"Calm"},{k:"일정",e:"Steady"}]},
+        {s:"공간",o:[{k:"홀",e:"Hall"},{k:"스타디움",e:"Stadium"},{k:"야외",e:"Outdoor"},{k:"우주",e:"Space"},{k:"수중",e:"Water"},{k:"동굴",e:"Cave"},{k:"방",e:"Room"},{k:"드라이",e:"Dry"},{k:"깊음",e:"Deep"},{k:"무한",e:"Infinite"}]},
+        {s:"효과",o:[{k:"라이저",e:"Riser"},{k:"다운",e:"Down"},{k:"히트",e:"Hit"},{k:"리버스",e:"Reverse"},{k:"글리치",e:"Glitch"},{k:"엠비언스",e:"Ambience"},{k:"서브",e:"Sub"},{k:"브레스",e:"Breath"},{k:"바람",e:"Wind"},{k:"폭발",e:"Boom"}]},
+        {s:"멜로디",o:[{k:"테마",e:"Theme"},{k:"서정",e:"Lyrical"},{k:"웅장",e:"Epic"},{k:"공포",e:"Dark"},{k:"희망",e:"Hope"},{k:"단순",e:"Simple"},{k:"복잡",e:"Complex"},{k:"반복",e:"Repetitive"},{k:"없음",e:"None"},{k:"캐치",e:"Catchy"}]},
+        {s:"전개",o:[{k:"기승전결",e:"Plot"},{k:"빌드업",e:"Build"},{k:"클라이맥스",e:"Climax"},{k:"엔딩",e:"Ending"},{k:"인트로",e:"Intro"},{k:"브릿지",e:"Bridge"},{k:"루프",e:"Loop"},{k:"변칙",e:"Irregular"},{k:"페이드",e:"Fade"},{k:"급변",e:"Sudden"}]},
+        {s:"텍스처",o:[{k:"오가닉",e:"Organic"},{k:"전자",e:"Electronic"},{k:"하이브리드",e:"Hybrid"},{k:"거침",e:"Rough"},{k:"부드러움",e:"Smooth"},{k:"따뜻함",e:"Warm"},{k:"차가움",e:"Cold"},{k:"금속",e:"Metal"},{k:"우드",e:"Wood"},{k:"정제",e:"Refined"}]},
+        {s:"용도",o:[{k:"영화",e:"Film"},{k:"게임",e:"Game"},{k:"유튜브",e:"YouTube"},{k:"광고",e:"AD"},{k:"트레일러",e:"Trailer"},{k:"배경",e:"BGM"},{k:"다큐",e:"Docu"},{k:"애니",e:"Anime"},{k:"무대",e:"Stage"},{k:"방송",e:"TV"}]},
+        {s:"믹스",o:[{k:"웅장",e:"Epic"},{k:"선명",e:"Clear"},{k:"펀치",e:"Punchy"},{k:"와이드",e:"Wide"},{k:"깊음",e:"Deep"},{k:"균형",e:"Balanced"},{k:"강력",e:"Powerful"},{k:"섬세",e:"Delicate"},{k:"동적",e:"Dynamic"},{k:"최종",e:"Final"}]},
+        {s:"임팩트",o:[{k:"매우강함",e:"Huge"},{k:"강함",e:"Strong"},{k:"중간",e:"Medium"},{k:"약함",e:"Weak"},{k:"부드러움",e:"Soft"},{k:"갑작스름",e:"Sudden"},{k:"점진적",e:"Gradual"},{k:"충격",e:"Shock"},{k:"폭발",e:"Explosion"},{k:"평탄",e:"Flat"}]},
+        {s:"품질",o:[{k:"마스터",e:"Master"},{k:"하이파이",e:"Hi-Fi"},{k:"하이레졸",e:"Hi-Res"},{k:"무손실",e:"Lossless"},{k:"스튜디오",e:"Studio"},{k:"서라운드",e:"Surround"},{k:"3D",e:"3D"},{k:"8k",e:"8k"},{k:"최종",e:"Final"},{k:"표준",e:"Standard"}]}
+    ],
+    world: [
+        {s:"지역",o:[{k:"아시아",e:"Asia"},{k:"아프리카",e:"Africa"},{k:"중동",e:"Middle East"},{k:"유럽",e:"Europe"},{k:"켈틱",e:"Celtic"},{k:"라틴",e:"Latin"},{k:"인도",e:"India"},{k:"네이티브",e:"Native"},{k:"글로벌",e:"Global"},{k:"뉴에이지",e:"New Age"}]},
+        {s:"타악기",o:[{k:"드럼",e:"Drum"},{k:"젬베",e:"Djembe"},{k:"콩가",e:"Conga"},{k:"타블라",e:"Tabla"},{k:"장구",e:"Janggu"},{k:"타이코",e:"Taiko"},{k:"쉐이커",e:"Shaker"},{k:"벨",e:"Bell"},{k:"금속",e:"Metal"},{k:"우드",e:"Wood"}]},
+        {s:"선율악기",o:[{k:"플루트",e:"Flute"},{k:"기타",e:"Guitar"},{k:"시타르",e:"Sitar"},{k:"비파",e:"Bipa"},{k:"가야금",e:"Gayageum"},{k:"바이올린",e:"Violin"},{k:"오보에",e:"Oboe"},{k:"파이프",e:"Pipe"},{k:"하프",e:"Harp"},{k:"건반",e:"Keys"}]},
+        {s:"리듬",o:[{k:"전통",e:"Traditional"},{k:"빠름",e:"Fast"},{k:"느림",e:"Slow"},{k:"복잡",e:"Complex"},{k:"단순",e:"Simple"},{k:"반복",e:"Repetitive"},{k:"셔플",e:"Shuffle"},{k:"엇박",e:"Syncopation"},{k:"정박",e:"Straight"},{k:"변칙",e:"Odd"}]},
+        {s:"보컬",o:[{k:"전통",e:"Ethnic"},{k:"솔로",e:"Solo"},{k:"콰이어",e:"Choir"},{k:"허밍",e:"Humming"},{k:"챈트",e:"Chant"},{k:"내레이션",e:"Narration"},{k:"가성",e:"Falsetto"},{k:"샤우팅",e:"Shouting"},{k:"레이어",e:"Layer"},{k:"없음",e:"None"}]},
+        {s:"무드",o:[{k:"신비",e:"Mystical"},{k:"열정",e:"Passionate"},{k:"평화",e:"Peaceful"},{k:"슬픔",e:"Sad"},{k:"웅장",e:"Epic"},{k:"어두움",e:"Dark"},{k:"밝음",e:"Bright"},{k:"원시",e:"Primal"},{k:"미래",e:"Future"},{k:"몽환",e:"Dreamy"}]},
+        {s:"융합",o:[{k:"전자",e:"Electronic"},{k:"재즈",e:"Jazz"},{k:"락",e:"Rock"},{k:"팝",e:"Pop"},{k:"힙합",e:"Hiphop"},{k:"클래식",e:"Classic"},{k:"앰비언트",e:"Ambient"},{k:"시네마",e:"Cinema"},{k:"로파이",e:"Lo-fi"},{k:"없음",e:"None"}]},
+        {s:"배경",o:[{k:"자연",e:"Nature"},{k:"도시",e:"Urban"},{k:"사원",e:"Temple"},{k:"광장",e:"Square"},{k:"정글",e:"Jungle"},{k:"사막",e:"Desert"},{k:"산",e:"Mountain"},{k:"바다",e:"Sea"},{k:"우주",e:"Space"},{k:"스튜디오",e:"Studio"}]},
+        {s:"스케일",o:[{k:"5음",e:"Pentatonic"},{k:"전통",e:"Ethnic Scale"},{k:"메이저",e:"Major"},{k:"마이너",e:"Minor"},{k:"모드",e:"Modal"},{k:"반음",e:"Chromatic"},{k:"마이크로",e:"Microtonal"},{k:"복합",e:"Complex"},{k:"단순",e:"Simple"},{k:"없음",e:"None"}]},
+        {s:"질감",o:[{k:"거침",e:"Rough"},{k:"부드러움",e:"Smooth"},{k:"따뜻함",e:"Warm"},{k:"차가움",e:"Cold"},{k:"오가닉",e:"Organic"},{k:"전자",e:"Electronic"},{k:"금속",e:"Metal"},{k:"우드",e:"Wood"},{k:"정제",e:"Refined"},{k:"아날로그",e:"Analog"}]},
+        {s:"목적",o:[{k:"다큐",e:"Docu"},{k:"영화",e:"Film"},{k:"여행",e:"Travel"},{k:"축제",e:"Festival"},{k:"명상",e:"Meditation"},{k:"유튜브",e:"YouTube"},{k:"광고",e:"AD"},{k:"배경",e:"BGM"},{k:"무대",e:"Stage"},{k:"전시",e:"Exhibit"}]},
+        {s:"다이내믹",o:[{k:"강력",e:"Strong"},{k:"약함",e:"Weak"},{k:"동적",e:"Dynamic"},{k:"안정",e:"Steady"},{k:"급변",e:"Sudden"},{k:"점진",e:"Gradual"},{k:"폭발",e:"Explosive"},{k:"잔잔",e:"Calm"},{k:"압축",e:"Compressed"},{k:"평탄",e:"Flat"}]},
+        {s:"밀도",o:[{k:"빽빽함",e:"Dense"},{k:"여백",e:"Sparse"},{k:"중간",e:"Medium"},{k:"두터움",e:"Thick"},{k:"투명",e:"Clear"},{k:"복잡",e:"Complex"},{k:"단순",e:"Simple"},{k:"흐름",e:"Flowing"},{k:"정적",e:"Static"},{k:"다층",e:"Layered"}]},
+        {s:"입체",o:[{k:"와이드",e:"Wide"},{k:"중앙",e:"Center"},{k:"3D",e:"3D"},{k:"서라운드",e:"Surround"},{k:"바이노럴",e:"Binaural"},{k:"원근",e:"Depth"},{k:"공간",e:"Space"},{k:"모노",e:"Mono"},{k:"홀로",e:"Hologram"},{k:"동적",e:"Dynamic"}]},
+        {s:"품질",o:[{k:"마스터",e:"Master"},{k:"하이파이",e:"Hi-Fi"},{k:"하이레졸",e:"Hi-Res"},{k:"무손실",e:"Lossless"},{k:"스튜디오",e:"Studio"},{k:"최종",e:"Final"},{k:"표준",e:"Standard"},{k:"8k",e:"8k"},{k:"선명",e:"Clear"},{k:"폴리싱",e:"Polish"}]}
+    ],
+    ccm: [
+        {s:"테마",o:[{k:"임재",e:"Presence"},{k:"은혜",e:"Grace"},{k:"치유",e:"Healing"},{k:"영광",e:"Glory"},{k:"부름",e:"Calling"},{k:"언약",e:"Covenant"},{k:"예배",e:"Worship"},{k:"빛",e:"Light"},{k:"평안",e:"Peace"},{k:"생명",e:"Life"}]},
+        {s:"무드",o:[{k:"웅장",e:"Epic"},{k:"차분",e:"Calm"},{k:"열정",e:"Passionate"},{k:"몽환",e:"Dreamy"},{k:"기쁨",e:"Joyful"},{k:"엄숙",e:"Solemn"},{k:"따뜻함",e:"Warm"},{k:"희망",e:"Hopeful"},{k:"신비",e:"Mystical"},{k:"안정",e:"Steady"}]},
+        {s:"건반",o:[{k:"피아노",e:"Piano"},{k:"EP",e:"Rhodes"},{k:"오르간",e:"Organ"},{k:"패드",e:"Pad"},{k:"신스",e:"Synth"},{k:"레이어",e:"Layer"},{k:"벨",e:"Bell"},{k:"스트링",e:"Strings"},{k:"없음",e:"None"},{k:"건반위주",e:"Keys Main"}]},
+        {s:"보컬",o:[{k:"솔로",e:"Solo"},{k:"듀엣",e:"Duet"},{k:"콰이어",e:"Choir"},{k:"인도자",e:"Leader"},{k:"회중",e:"Congregation"},{k:"위스퍼",e:"Whisper"},{k:"허밍",e:"Humming"},{k:"레이어",e:"Layer"},{k:"파워",e:"Power"},{k:"부드러움",e:"Soft"}]},
+        {s:"리듬",o:[{k:"4비트",e:"4-beat"},{k:"8비트",e:"8-beat"},{k:"16비트",e:"16-beat"},{k:"셔플",e:"Shuffle"},{k:"슬로우",e:"Slow"},{k:"미디움",e:"Medium"},{k:"빠름",e:"Fast"},{k:"안정",e:"Steady"},{k:"고조",e:"Build"},{k:"없음",e:"None"}]},
+        {s:"패드",o:[{k:"에테리얼",e:"Ethereal"},{k:"워터",e:"Water"},{k:"웜",e:"Warm"},{k:"글로우",e:"Glow"},{k:"딥",e:"Deep"},{k:"브라이트",e:"Bright"},{k:"신스",e:"Synth"},{k:"스트링",e:"Strings"},{k:"레이어",e:"Layer"},{k:"없음",e:"None"}]},
+        {s:"공간",o:[{k:"예배당",e:"Chapel"},{k:"대성당",e:"Cathedral"},{k:"스타디움",e:"Stadium"},{k:"방",e:"Room"},{k:"스튜디오",e:"Studio"},{k:"넓음",e:"Wide"},{k:"깊음",e:"Deep"},{k:"드라이",e:"Dry"},{k:"우주",e:"Space"},{k:"하늘",e:"Heaven"}]},
+        {s:"전개",o:[{k:"빌드업",e:"Build"},{k:"클라이맥스",e:"Climax"},{k:"엔딩",e:"Ending"},{k:"인트로",e:"Intro"},{k:"브릿지",e:"Bridge"},{k:"반복",e:"Loop"},{k:"변칙",e:"Irregular"},{k:"흐름",e:"Flowing"},{k:"갑작스런드롭",e:"Drop"},{k:"페이드",e:"Fade"}]},
+        {s:"콰이어",o:[{k:"전체",e:"Full"},{k:"여성",e:"Female"},{k:"남성",e:"Male"},{k:"소년",e:"Boys"},{k:"유니즌",e:"Unison"},{k:"화음",e:"Harmony"},{k:"가스펠",e:"Gospel"},{k:"아카펠라",e:"A Cappella"},{k:"허밍",e:"Humming"},{k:"없음",e:"None"}]},
+        {s:"현악",o:[{k:"풀",e:"Full"},{k:"4중주",e:"Quartet"},{k:"솔로첼로",e:"Cello"},{k:"바이올린",e:"Violin"},{k:"시네마틱",e:"Cinematic"},{k:"레가토",e:"Legato"},{k:"피치카토",e:"Pizzicato"},{k:"스타카토",e:"Staccato"},{k:"에테리얼",e:"Ethereal"},{k:"없음",e:"None"}]},
+        {s:"베이스",o:[{k:"일렉",e:"Electric"},{k:"신스",e:"Synth"},{k:"저음",e:"Heavy"},{k:"부드러움",e:"Soft"},{k:"스테디",e:"Steady"},{k:"그루비",e:"Groovy"},{k:"서브",e:"Sub"},{k:"업라이트",e:"Upright"},{k:"워킹",e:"Walking"},{k:"없음",e:"None"}]},
+        {s:"용도",o:[{k:"예배",e:"Worship"},{k:"기도",e:"Prayer"},{k:"묵상",e:"Meditation"},{k:"찬양",e:"Praise"},{k:"배경",e:"BGM"},{k:"특송",e:"Special"},{k:"집회",e:"Conference"},{k:"개인",e:"Personal"},{k:"유튜브",e:"YouTube"},{k:"방송",e:"TV"}]},
+        {s:"음압",o:[{k:"강력",e:"Strong"},{k:"약함",e:"Weak"},{k:"동적",e:"Dynamic"},{k:"안정",e:"Steady"},{k:"펀치",e:"Punchy"},{k:"부드러움",e:"Soft"},{k:"와이드",e:"Wide"},{k:"선명",e:"Clear"},{k:"웅장",e:"Epic"},{k:"평탄",e:"Flat"}]},
+        {s:"멜로디",o:[{k:"캐치",e:"Catchy"},{k:"서정",e:"Lyrical"},{k:"단순",e:"Simple"},{k:"복잡",e:"Complex"},{k:"반복",e:"Repetitive"},{k:"도약",e:"Leaping"},{k:"순차",e:"Stepwise"},{k:"강렬",e:"Intense"},{k:"부드러움",e:"Soft"},{k:"훅",e:"Hook"}]},
+        {s:"마스터",o:[{k:"마스터",e:"Master"},{k:"하이파이",e:"Hi-Fi"},{k:"하이레졸",e:"Hi-Res"},{k:"무손실",e:"Lossless"},{k:"스튜디오",e:"Studio"},{k:"최종",e:"Final"},{k:"표준",e:"Standard"},{k:"방송",e:"TV"},{k:"라디오",e:"Radio"},{k:"폴리싱",e:"Polish"}]}
+    ],
+    trot: [
+        {s:"분과",o:[{k:"정통",e:"Traditional"},{k:"세미",e:"Semi"},{k:"디스코",e:"Disco"},{k:"발라드",e:"Ballad"},{k:"뉴트로",e:"Newtro"},{k:"락",e:"Rock"},{k:"재즈",e:"Jazz"},{k:"EDM",e:"EDM"},{k:"블루스",e:"Blues"},{k:"메들리",e:"Medley"}]},
+        {s:"창법",o:[{k:"꺾기",e:"Kkeok-gi"},{k:"바이브레이션",e:"Vibration"},{k:"허스키",e:"Husky"},{k:"애절",e:"Yearning"},{k:"파워",e:"Power"},{k:"부드러움",e:"Soft"},{k:"간드러짐",e:"Sweet"},{k:"내지름",e:"Shouting"},{k:"속삭임",e:"Whisper"},{k:"정석",e:"Standard"}]},
+        {s:"금관",o:[{k:"섹소폰",e:"Sax"},{k:"트럼펫",e:"Trumpet"},{k:"트롬본",e:"Trombone"},{k:"섹션",e:"Section"},{k:"솔로",e:"Solo"},{k:"뮤트",e:"Muted"},{k:"화려함",e:"Brilliant"},{k:"부드러움",e:"Mellow"},{k:"강렬",e:"Intense"},{k:"없음",e:"None"}]},
+        {s:"리듬",o:[{k:"쿵짝",e:"Kung-jjak"},{k:"디스코",e:"Disco"},{k:"셔플",e:"Shuffle"},{k:"슬로우",e:"Slow"},{k:"미디움",e:"Medium"},{k:"빠름",e:"Fast"},{k:"스윙",e:"Swing"},{k:"블루스",e:"Blues"},{k:"폴카",e:"Polka"},{k:"왈츠",e:"Waltz"}]},
+        {s:"전통악기",o:[{k:"가야금",e:"Gayageum"},{k:"해금",e:"Haegeum"},{k:"피리",e:"Piri"},{k:"태평소",e:"Taepyongso"},{k:"장구",e:"Janggu"},{k:"북",e:"Buk"},{k:"대금",e:"Daegeum"},{k:"아쟁",e:"Ajaeng"},{k:"없음",e:"None"},{k:"융합",e:"Fusion"}]},
+        {s:"감성",o:[{k:"신남",e:"Exciting"},{k:"슬픔",e:"Sad"},{k:"사랑",e:"Love"},{k:"고향",e:"Home"},{k:"어머니",e:"Mother"},{k:"인생",e:"Life"},{k:"이별",e:"Parting"},{k:"희망",e:"Hope"},{k:"술",e:"Drink"},{k:"세월",e:"Time"}]},
+        {s:"코러스",o:[{k:"여성",e:"Female"},{k:"남성",e:"Male"},{k:"혼성",e:"Mixed"},{k:"풍성",e:"Rich"},{k:"미니멀",e:"Minimal"},{k:"떼창",e:"Singalong"},{k:"가요풍",e:"Pop Style"},{k:"전통풍",e:"Traditional"},{k:"없음",e:"None"},{k:"레이어",e:"Layer"}]},
+        {s:"기타",o:[{k:"일렉",e:"Electric"},{k:"어쿠스틱",e:"Acoustic"},{k:"나일론",e:"Nylon"},{k:"와와",e:"Wah"},{k:"뮤트",e:"Muted"},{k:"커팅",e:"Cutting"},{k:"솔로",e:"Solo"},{k:"리프",e:"Riff"},{k:"드라이브",e:"Driven"},{k:"없음",e:"None"}]},
+        {s:"공간",o:[{k:"무대",e:"Stage"},{k:"카바레",e:"Cabaret"},{k:"스튜디오",e:"Studio"},{k:"야외",e:"Outdoor"},{k:"노래방",e:"Karaoke"},{k:"넓음",e:"Wide"},{k:"드라이",e:"Dry"},{k:"깊음",e:"Deep"},{k:"동굴",e:"Cave"},{k:"라이브",e:"Live"}]},
+        {s:"템포",o:[{k:"120bpm",e:"120"},{k:"130bpm",e:"130"},{k:"140bpm",e:"140"},{k:"60bpm",e:"60"},{k:"80bpm",e:"80"},{k:"100bpm",e:"100"},{k:"빠름",e:"Fast"},{k:"느림",e:"Slow"},{k:"안정",e:"Steady"},{k:"유동",e:"Fluid"}]},
+        {s:"스케일",o:[{k:"단조",e:"Minor"},{k:"장조",e:"Major"},{k:"전통",e:"Traditional"},{k:"펜타",e:"Pentatonic"},{k:"블루스",e:"Blues"},{k:"반음",e:"Chromatic"},{k:"일본풍",e:"Enka Style"},{k:"가요풍",e:"Pop"},{k:"복합",e:"Complex"},{k:"없음",e:"None"}]},
+        {s:"용도",o:[{k:"방송",e:"TV"},{k:"공연",e:"Stage"},{k:"행사",e:"Event"},{k:"잔치",e:"Party"},{k:"배경",e:"BGM"},{k:"유튜브",e:"YouTube"},{k:"드라이브",e:"Drive"},{k:"효도",e:"Gift"},{k:"개인",e:"Personal"},{k:"광고",e:"AD"}]},
+        {s:"드럼",o:[{k:"전자",e:"Electronic"},{k:"어쿠스틱",e:"Acoustic"},{k:"강력",e:"Strong"},{k:"부드러움",e:"Soft"},{k:"하이햇",e:"Hihat"},{k:"스네어",e:"Snare"},{k:"킥",e:"Kick"},{k:"리듬위주",e:"Rhythm"},{k:"퍼커션",e:"Percussion"},{k:"없음",e:"None"}]},
+        {s:"질감",o:[{k:"선명",e:"Clear"},{k:"거침",e:"Rough"},{k:"부드러움",e:"Smooth"},{k:"따뜻함",e:"Warm"},{k:"아날로그",e:"Analog"},{k:"디지털",e:"Digital"},{k:"빈티지",e:"Vintage"},{k:"하모나이즈",e:"Harmonize"},{k:"정제",e:"Refined"},{k:"박력",e:"Punchy"}]},
+        {s:"최종",o:[{k:"방송",e:"TV Std"},{k:"마스터",e:"Master"},{k:"하이파이",e:"Hi-Fi"},{k:"하이레졸",e:"Hi-Res"},{k:"라디오",e:"Radio"},{k:"표준",e:"Standard"},{k:"최종",e:"Final"},{k:"폴리싱",e:"Polish"},{k:"서라운드",e:"Surround"},{k:"3D",e:"3D"}]}
+    ]
+};
+
+function bootEngine() {
+    const disp = document.getElementById('engineDisplay');
+    const genre = document.getElementById('masterGenre').value;
+    disp.innerHTML = '';
+    const data = DB[genre];
+    data.forEach((item, i) => {
+        const div = document.createElement('div');
+        div.className = 'step-module';
+        const opts = item.o.map(opt => `<option value="${opt.e}">${opt.k} (${opt.e})</option>`).join('');
+        div.innerHTML = `<label>STEP ${String(i+1).padStart(2, '0')} : ${item.s}</label>
+                         <select id="s${i}">${opts}</select>`;
+        disp.appendChild(div);
+    });
+}
+
+function ignite() {
+    const sel = document.getElementById('masterGenre');
+    let res = `[SEANSUN v17.0 FINAL] GENRE: ${sel.options[sel.selectedIndex].text} | PARAMS: `;
+    document.querySelectorAll('.step-module select').forEach(s => { res += s.value + ", "; });
+    res += "All Manual Hardcoded Data, UHD Fidelity.";
+    document.getElementById('output').value = res;
+    navigator.clipboard.writeText(res);
+    alert('SUPREME PROMPT COPIED! (1,800 DATA FULL LOADED)');
+}
+window.onload = bootEngine;
+</script>
+</body>
+</html>
